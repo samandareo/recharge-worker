@@ -38,7 +38,7 @@ async function startConsumer() {
                     type: 1,
                     id: Date.now(),
                     user: "01781573626",
-                    key: "",
+                    key: "D3181OSW9X6UJCN7RG50ZMKYK2BKG6RHJO8NRV0J6H54Q37KWU",
                     operator: operators[data.operator]
                 }
 
