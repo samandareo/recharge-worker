@@ -6,10 +6,10 @@ const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
-const PORT = 8001;
-const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost';
+const PORT = 4001;
+const RABBITMQ_URL = 'amqp://localhost';
 const QUEUE_NAME = 'recharge-queue';
-const RECHARGE_URL = process.env.RECHARGE_URL || 'https://rechargemasterbd.com/sendapi/request';
+const RECHARGE_URL = 'https://rechargemasterbd.com/sendapi/request';
 
 connectDB();
 
