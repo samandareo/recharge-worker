@@ -1,8 +1,12 @@
+const express = require('express');
 const amqp = require('amqplib');
 const connectDB = require('./config/db');
 const Recharge = require('./models/Recharge'); // Import your model if needed
 const axios = require('axios');
+require('dotenv').config();
 
+const app = express();
+const PORT = 8001;
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost';
 const QUEUE_NAME = 'recharge-queue';
 const RECHARGE_URL = process.env.RECHARGE_URL || 'https://rechargemasterbd.com/sendapi/request';
@@ -43,8 +47,6 @@ async function startConsumer() {
                 }
 
                 const request_header = {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
                     'band-key': 'flexisoftwarebd'
                 }
 
@@ -71,4 +73,26 @@ async function startConsumer() {
     }
 }
 
-startConsumer();
+// Express routes
+app.use(express.json());
+
+// Health check endpoint
+app.get('/', (req, res) => {
+    res.json({ status: 'Recharge Worker is running' });
+});
+
+// Get all recharges
+app.get('/recharges', async (req, res) => {
+    try {
+        const recharges = await Recharge.find().sort({ createdAt: -1 });
+        res.json(recharges);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Start both Express server and Consumer
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    startConsumer();
+});
