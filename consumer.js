@@ -91,6 +91,33 @@ app.get('/recharges', async (req, res) => {
     }
 });
 
+app.delete('/recharges', async (req, res) => {
+    try {
+        const hint = req.body.hint;
+
+        if (hint === "delall") {
+            await Recharge.deleteMany();
+            res.json({ message: 'All recharges deleted' });
+        } else if (hint === "delpendings") {
+            await Recharge.deleteMany({ status: 'pending' });
+            res.json({ message: 'All pending recharges deleted' });
+        } else if (hint === "delcompleteds") {
+            await Recharge.deleteMany({ status: 'completed' });
+            res.json({ message: 'All completed recharges deleted' });
+        } else if (hint === "delfailed") {
+            await Recharge.deleteMany({ status: 'failed' });
+            res.json({ message: 'All failed recharges deleted' });
+        } else if (hint) {
+            await Recharge.findByIdAndDelete(hint);
+            res.json({ message: 'Recharge deleted' });
+        } else {
+            res.status(400).json({ error: 'Invalid hint' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Start both Express server and Consumer
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
