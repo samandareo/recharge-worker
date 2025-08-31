@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
 const ApiResponse = require("../utils/apiResponse");
-const Admin = require("../models/Admin");
-const RechargeAdmin = require("../models/RechargeAdmin");
+const Admin = require("../models/RechargeAdmin");
 require("dotenv").config();
 
 exports.protectAdmin = async (req, res, next) => {
