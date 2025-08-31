@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken")
 
-const Admin = new mongoose.Schema({
+const RechargeAdmin = new mongoose.Schema({
     name: {
         type: String,
         required: [true, "Name is required"],
@@ -29,25 +29,46 @@ const Admin = new mongoose.Schema({
     refreshToken: {
         type: String,
     },
+    role: {
+        type: String,
+        default: 'recharge',
+        enum: ['recharge']
+    },
+    permissions: [{
+        type: String,
+        enum: ['view_recharge', 'process_recharge']
+    }],
+    isActive: {
+        type: Boolean,
+        default: true
+    }
 }, { timestamps: true });
 
-Admin.pre("save", async function (next) {
+RechargeAdmin.pre("save", async function (next) {
     if(!this.isModified("password")) return next();
     this.password = await bcrypt.hash(this.password, 12);
     next();
 });
 
-Admin.methods.generateAccessToken = function () {
+RechargeAdmin.methods.generateAccessToken = function () {
     return jwt.sign(
-        { id: this._id, hint: this.hint },
+        { 
+            id: this._id, 
+            hint: this.hint,
+            role: this.role,
+            permissions: this.permissions 
+        },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || "1d"}
     );
 };
 
-Admin.methods.generateRefreshToken = async function () {
+RechargeAdmin.methods.generateRefreshToken = async function () {
     const refreshToken = jwt.sign(
-        { id: this._id },
+        { 
+            id: this._id,
+            role: this.role 
+        },
         process.env.JWT_REFRESH_SECRET,
         { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "30d"}
     );
@@ -58,8 +79,8 @@ Admin.methods.generateRefreshToken = async function () {
     return refreshToken;
 }
 
-Admin.methods.comparePassword = async function (candidatePassword) {
+RechargeAdmin.methods.comparePassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password)
 }
 
-module.exports = mongoose.model("Admin", Admin);
+module.exports = mongoose.model("RechargeAdmin", RechargeAdmin);
