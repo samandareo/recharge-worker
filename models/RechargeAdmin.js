@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
+const Recharge = require("./Recharge");
 
 const RechargeAdmin = new mongoose.Schema({
     name: {
@@ -22,25 +23,8 @@ const RechargeAdmin = new mongoose.Schema({
         minlength: 8,
         select: false,
     },
-    hint: {
-        type: String,
-        required: [true, "Please, write something for hint..."]
-    },
     refreshToken: {
         type: String,
-    },
-    role: {
-        type: String,
-        default: 'recharge',
-        enum: ['recharge']
-    },
-    permissions: [{
-        type: String,
-        enum: ['view_recharge', 'process_recharge']
-    }],
-    isActive: {
-        type: Boolean,
-        default: true
     }
 }, { timestamps: true });
 
@@ -53,10 +37,7 @@ RechargeAdmin.pre("save", async function (next) {
 RechargeAdmin.methods.generateAccessToken = function () {
     return jwt.sign(
         { 
-            id: this._id, 
-            hint: this.hint,
-            role: this.role,
-            permissions: this.permissions 
+            id: this._id
         },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || "1d"}
@@ -66,8 +47,7 @@ RechargeAdmin.methods.generateAccessToken = function () {
 RechargeAdmin.methods.generateRefreshToken = async function () {
     const refreshToken = jwt.sign(
         { 
-            id: this._id,
-            role: this.role 
+            id: this._id
         },
         process.env.JWT_REFRESH_SECRET,
         { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "30d"}

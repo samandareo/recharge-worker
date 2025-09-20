@@ -1,4 +1,4 @@
-const Admin = require("../models/RechargeAdmin");
+const RechargeAdmin = require("../models/RechargeAdmin");
 const ApiResponse = require("../utils/apiResponse");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
@@ -8,16 +8,22 @@ exports.registerAdmin = async (req, res, next) => {
     try {
         const {name, username, password, hint } = req.body;
 
-        const existingAdmin = await Admin.findOne({ username });
+        const existingAdmin = await RechargeAdmin.findOne({ username });
         if (existingAdmin) {
             return ApiResponse.invalid("Username already taken.").send(res);
         }
+        if (!hint || hint.trim().length === 0) {
+            return ApiResponse.invalid("Hint is required.").send(res);
+        }
 
-        const newAdmin = await Admin.create({
+        if (hint !== process.env.REGISTER_HINT) {
+            return ApiResponse.invalid("Hint is incorrect!").send(res);
+        }
+        
+        const newAdmin = await RechargeAdmin.create({
             name,
             username,
-            password,
-            hint
+            password
         });
 
         const accessToken = newAdmin.generateAccessToken();
@@ -41,7 +47,7 @@ exports.loginAdmin = async (req, res, next) => {
     try {
         const { username, password } = req.body;
 
-        const admin = await Admin.findOne({ username }).select("+password");
+        const admin = await RechargeAdmin.findOne({ username }).select("+password");
         if (!admin) {
             return ApiResponse.unauthorized("Invalid credentials").send(res);
         }
@@ -75,7 +81,7 @@ exports.refreshTokens = async (req, res) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-        const admin = await Admin.findById(decoded.id);
+        const admin = await RechargeAdmin.findById(decoded.id);
         if (!admin) {
             return ApiResponse.unauthorized("Invalid user").send(res);
         }

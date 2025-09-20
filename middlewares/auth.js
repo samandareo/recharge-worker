@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const ApiResponse = require("../utils/apiResponse");
-const Admin = require("../models/RechargeAdmin");
+const RechargeAdmin = require("../models/RechargeAdmin");
 require("dotenv").config();
 
 exports.protectAdmin = async (req, res, next) => {
@@ -20,17 +20,8 @@ exports.protectAdmin = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        let admin;
 
-        if (decoded.role === 'recharge') {
-            admin = await RechargeAdmin.findOne({_id: decoded.id, isActive: true});
-        } else {
-            admin = await Admin.findOne({_id: decoded.id, isActive: true});
-        }
-
-        if (decoded?.hint !== process.env.REGISTER_HINT) {
-            return ApiResponse.invalid("Hint is invalid! This admin is not real.")
-        }
+        const admin = await RechargeAdmin.findById(decoded.id);
 
         if (!admin) {
             return ApiResponse.unauthorized("Not authorized to access this route without a valid admin").send(res);
