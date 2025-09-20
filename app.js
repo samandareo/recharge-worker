@@ -6,11 +6,24 @@ const errorHandler = require("./middlewares/error");
 
 const app = express();
 
+// CORS configuration for admin panel access
+const corsOptions = {
+    origin: "https://aspadmin.diderappstore.top",
+    credentials: true,
+    optionsSuccessStatus: 200,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
+    exposedHeaders: ['Set-Cookie']
+};
+
 // Middlewares
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
+
+// Explicit preflight handler for all API routes
+app.options('*', cors(corsOptions));
 
 app.get("/api/", (req, res) => {
     res.send(`
