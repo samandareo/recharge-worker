@@ -12,8 +12,9 @@ const corsOptions = {
     credentials: true,
     optionsSuccessStatus: 200,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
-    exposedHeaders: ['Set-Cookie']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With', 'Access-Control-Allow-Origin'],
+    exposedHeaders: ['Set-Cookie'],
+    accessControlAllowOrigin: "https://aspadmin.diderappstore.top"
 };
 
 // Middlewares
