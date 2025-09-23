@@ -29,12 +29,35 @@ exports.registerAdmin = async (req, res, next) => {
         const accessToken = newAdmin.generateAccessToken();
         const refreshToken = await newAdmin.generateRefreshToken();
 
+        /**
+         * LIVE DEPLOYMENT NOTE (READ ME)
+         * --------------------------------
+         * যদি Admin Panel অন্য origin-এ চলে (যেমন: https://aspadmin.diderappstore.top)
+         * এবং API আর Panel ভিন্ন origin হয়, তবে cross-site কুকির জন্য সাধারণত:
+         *   - NODE_ENV=production হলে `secure: true`
+         *   - SameSite: 'None' (Strict/Lax হলে ব্রাউজার cross-site কুকি পাঠাবে না)
+         *   - প্রয়োজনে `domain` সেট করতে হতে পারে (যদি সাবডোমেইন শেয়ার করেন)
+         * লোকালে টেস্টিংয়ের সময় HTTPS না থাকলে SameSite 'Strict' রাখা হয়েছে।
+         * প্রোডাকশনে HTTPS নিশ্চিত করে SameSite 'None' করার কথা বিবেচনা করুন।
+         */
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
+
+        // [LIVE SWITCH - PRODUCTION]
+        // In production with HTTPS and cross-site Admin Panel, uncomment the block below
+        // and remove/disable the block above. This enables third-party cookie usage.
+        //
+        // res.cookie("refreshToken", refreshToken, {
+        //     httpOnly: true,
+        //     secure: true, // require HTTPS in production
+        //     sameSite: "None", // allow cross-site cookie
+        //     // domain: ".diderappstore.top", // optional: set if sharing across subdomains
+        //     maxAge: 7 * 24 * 60 * 60 * 1000,
+        // });
 
         return ApiResponse.created(accessToken).send(res);
     } catch (err) {
@@ -60,6 +83,15 @@ exports.loginAdmin = async (req, res, next) => {
         const accessToken = admin.generateAccessToken();
         const refreshToken = await admin.generateRefreshToken();
 
+        /**
+         * LIVE DEPLOYMENT NOTE
+         * --------------------
+         * Panel যদি https://aspadmin.diderappstore.top এ চলে এবং API আলাদা origin হয়:
+         *   - প্রোডাকশনে HTTPS রাখুন + `secure: true`
+         *   - SameSite 'None' করুন (cross-site কুকির জন্য)
+         *   - প্রয়োজনে `domain` ব্যবহার করুন (যদি সাবডোমেইন শেয়ার করেন)
+         * লোকালে SameSite 'strict' আছে যাতে non-HTTPS এ ব্রাউজার এরর না দেয়।
+         */
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
@@ -100,6 +132,18 @@ exports.refreshTokens = async (req, res) => {
             sameSite: "strict",
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
+
+        // [LIVE SWITCH - PRODUCTION]
+        // In production with HTTPS and cross-site Admin Panel, uncomment the block below
+        // and remove/disable the block above. This enables third-party cookie usage.
+        //
+        // res.cookie("refreshToken", newRefreshToken, {
+        //     httpOnly: true,
+        //     secure: true, // require HTTPS in production
+        //     sameSite: "None", // allow cross-site cookie
+        //     // domain: ".diderappstore.top", // optional: set if sharing across subdomains
+        //     maxAge: 7 * 24 * 60 * 60 * 1000,
+        // });
 
         return ApiResponse.success(newAccessToken).send(res);
     } catch (err) {
