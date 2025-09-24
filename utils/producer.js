@@ -26,24 +26,24 @@ class RabbitMQProducer {
         timeout: CONNECTION_TIMEOUT
       });
       
-      this.channel = await this.connection.createChannel();
-      
-      // Enable publisher confirms
-      await this.channel.confirmChannel();
-      
-      // Assert queue with dead letter exchange
+
+      // Use confirm channel for publisher confirms
+      this.channel = await this.connection.createConfirmChannel();
+
+      // Assert queue (no DLX arguments to avoid precondition error)
       await this.channel.assertQueue(QUEUE_NAME, { 
-        durable: true,
-        arguments: {
-          'x-dead-letter-exchange': 'dlx-response',
-          'x-dead-letter-routing-key': 'recharge-response-queue-dlq'
-        }
+        durable: true
+        // To enable DLX in the future, add arguments here after deleting the queue from RabbitMQ
+        // arguments: {
+        //   'x-dead-letter-exchange': 'dlx-response',
+        //   'x-dead-letter-routing-key': 'recharge-response-queue-dlq'
+        // }
       });
 
-      // Assert dead letter queue for responses
-      await this.channel.assertExchange('dlx-response', 'direct', { durable: true });
-      await this.channel.assertQueue('recharge-response-queue-dlq', { durable: true });
-      await this.channel.bindQueue('recharge-response-queue-dlq', 'dlx-response', 'recharge-response-queue-dlq');
+      // (Optional) DLX setup - only if you want to use DLQ and have deleted the queue first
+      // await this.channel.assertExchange('dlx-response', 'direct', { durable: true });
+      // await this.channel.assertQueue('recharge-response-queue-dlq', { durable: true });
+      // await this.channel.bindQueue('recharge-response-queue-dlq', 'dlx-response', 'recharge-response-queue-dlq');
 
       this.isConnected = true;
       this.reconnectAttempts = 0;

@@ -25,19 +25,21 @@ class RabbitMQConsumer {
       // Set prefetch count to process one message at a time
       await this.channel.prefetch(1);
       
-      // Assert main queue
+
+      // Assert main queue (no DLX arguments to avoid precondition error)
       await this.channel.assertQueue(QUEUE_NAME, { 
-        durable: true,
-        arguments: {
-          'x-dead-letter-exchange': 'dlx',
-          'x-dead-letter-routing-key': 'recharge-queue-dlq'
-        }
+        durable: true
+        // To enable DLX in the future, add arguments here after deleting the queue from RabbitMQ
+        // arguments: {
+        //   'x-dead-letter-exchange': 'dlx',
+        //   'x-dead-letter-routing-key': 'recharge-queue-dlq'
+        // }
       });
 
-      // Assert dead letter queue
-      await this.channel.assertExchange('dlx', 'direct', { durable: true });
-      await this.channel.assertQueue('recharge-queue-dlq', { durable: true });
-      await this.channel.bindQueue('recharge-queue-dlq', 'dlx', 'recharge-queue-dlq');
+      // (Optional) DLX setup - only if you want to use DLQ and have deleted the queue first
+      // await this.channel.assertExchange('dlx', 'direct', { durable: true });
+      // await this.channel.assertQueue('recharge-queue-dlq', { durable: true });
+      // await this.channel.bindQueue('recharge-queue-dlq', 'dlx', 'recharge-queue-dlq');
 
       this.isConnected = true;
       this.reconnectAttempts = 0;
