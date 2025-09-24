@@ -35,6 +35,7 @@ exports.protectAdmin = async (req, res, next) => {
         console.log("Admin attached to request:", req.admin);
         next();
     } catch (err) {
+        console.error("Error in auth middleware:", err);
         console.error(err.message);
         return ApiResponse.unauthorized("Not authorized to access this route").send(res);
     }
