@@ -20,6 +20,12 @@ exports.protectAdmin = async (req, res, next) => {
         }
 
         console.log("Received token:", token);
+        console.log("JWT_SECRET being used for verification:", JWT_SECRET ? "SET" : "NOT SET");
+        console.log("JWT_SECRET length:", JWT_SECRET ? JWT_SECRET.length : 0);
+
+        // Try to decode without verification first to see the payload
+        const decodedWithoutVerification = jwt.decode(token);
+        console.log("Token payload (without verification):", decodedWithoutVerification);
 
         const decoded = jwt.verify(token, JWT_SECRET);
         console.log("Decoded JWT:", decoded);
@@ -36,7 +42,17 @@ exports.protectAdmin = async (req, res, next) => {
         next();
     } catch (err) {
         console.error("Error in auth middleware:", err);
-        console.error(err.message);
+        console.error("Error name:", err.name);
+        console.error("Error message:", err.message);
+        
+        // Specific handling for JWT errors
+        if (err.name === 'JsonWebTokenError') {
+            console.error("JWT_SECRET used:", JWT_SECRET ? "SET" : "NOT SET");
+            return ApiResponse.unauthorized("Invalid token signature").send(res);
+        } else if (err.name === 'TokenExpiredError') {
+            return ApiResponse.unauthorized("Token expired").send(res);
+        }
+        
         return ApiResponse.unauthorized("Not authorized to access this route").send(res);
     }
 }
