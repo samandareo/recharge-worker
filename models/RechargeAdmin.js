@@ -35,17 +35,38 @@ RechargeAdmin.pre("save", async function (next) {
 });
 
 RechargeAdmin.methods.generateAccessToken = function () {
-    console.log(`Generating access token with JWT_SECRET: ${JWT_SECRET}`);
-    return jwt.sign(
+    console.log("=== TOKEN GENERATION DEBUGGING ===");
+    console.log(`Generating access token with JWT_SECRET: ${JWT_SECRET ? 'SET' : 'NOT SET'}`);
+    console.log(`JWT_SECRET length: ${JWT_SECRET ? JWT_SECRET.length : 0}`);
+    console.log(`First 10 chars of JWT_SECRET: ${JWT_SECRET ? JWT_SECRET.substring(0, 10) + "..." : 'NOT SET'}`);
+    console.log(`Admin ID: ${this._id}`);
+    console.log(`JWT_EXPIRES_IN: ${JWT_EXPIRES_IN || "1d"}`);
+    
+    const token = jwt.sign(
         { 
             id: this._id
         },
         JWT_SECRET,
         { expiresIn: JWT_EXPIRES_IN || "1d"}
     );
+    
+    console.log(`Generated token: ${token.substring(0, 20)}...`);
+    
+    // Test verification immediately after generation
+    try {
+        const testVerify = jwt.verify(token, JWT_SECRET);
+        console.log("Token verification test PASSED:", testVerify);
+    } catch (testErr) {
+        console.error("Token verification test FAILED:", testErr.message);
+    }
+    
+    return token;
 };
 
 RechargeAdmin.methods.generateRefreshToken = async function () {
+    console.log("=== REFRESH TOKEN GENERATION ===");
+    console.log(`Generating refresh token with JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET ? 'SET' : 'NOT SET'}`);
+    
     const refreshToken = jwt.sign(
         { 
             id: this._id
