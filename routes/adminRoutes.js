@@ -6,4 +6,4 @@ router.route("/login").post(adminController.loginAdmin);
 router.route("/refresh").post(protectAdmin, adminController.refreshTokens);
 router.route("/register").post(adminController.registerAdmin);
 
-module.exports = router;    
+module.exports = router;

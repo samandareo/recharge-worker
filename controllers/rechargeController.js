@@ -1,6 +1,62 @@
 const Recharge = require("../models/Recharge");
 const ApiResponse = require("../utils/apiResponse");
 const { sendRechargeWebhook } = require("../utils/webhook");
+const mongoose = require("mongoose");
+
+// POST /api/recharge
+// Admin: create a new pending recharge and notify Admin Panel via webhook
+exports.createRechargeRequest = async (req, res) => {
+    try {
+        const { userId, phoneNumber, operator, amount, description } = req.body || {};
+        if (!phoneNumber || !operator || amount === undefined || amount === null) {
+            return ApiResponse.invalid("phoneNumber, operator and amount are required").send(res);
+        }
+        // Validate optional userId; ignore if invalid
+        let safeUserId = undefined;
+        if (userId) {
+            if (mongoose.Types.ObjectId.isValid(userId)) {
+                safeUserId = userId;
+            } else {
+                return ApiResponse.invalid("userId must be a valid ObjectId").send(res);
+            }
+        }
+
+        const job = await Recharge.create({
+            userId: safeUserId,
+            phoneNumber,
+            operator,
+            amount: String(amount),
+            status: "pending",
+            description: description || "",
+        });
+
+        // Fire webhook with pending status
+        try {
+            const payload = {
+                recharge_id: String(job._id),
+                user_id: job.userId ? String(job.userId) : undefined,
+                phone_number: job.phoneNumber,
+                operator: job.operator,
+                amount: job.amount ? parseInt(job.amount) : 0,
+                transaction_id: undefined,
+                updated_source: "api",
+                message: job.description || undefined,
+                status: "pending",
+                is_success: 0,
+                retry_count: job.retry_count || 0,
+            };
+            const whRes = await sendRechargeWebhook(payload);
+            console.log("Webhook(create)", { recharge_id: String(job._id), ok: whRes?.ok, status: whRes?.status, error: whRes?.error });
+        } catch (e) {
+            console.error("Webhook send failed (create):", e?.message || e);
+        }
+
+        return ApiResponse.created({ rechargeId: job._id }).send(res);
+    } catch (err) {
+        console.error("Create recharge error:", err);
+        return ApiResponse.error(err.message).send(res);
+    }
+}
 
 // GET /api/recharge
 // Admin
@@ -45,9 +101,6 @@ exports.changeRechargeRequest = async (req, res) => {
 
         const job = await Recharge.findOne({ _id: rechargeId});
 
-        if (job.retry_count >= 2) {
-            return ApiResponse.invalid("This recharge request was already failed").send(res);
-        }
         if (isSuccess) {
             job.status = "completed"
             job.description = description
@@ -60,7 +113,7 @@ exports.changeRechargeRequest = async (req, res) => {
                     user_id: job.userId ? String(job.userId) : undefined,
                     phone_number: job.phoneNumber,
                     operator: job.operator,
-                    amount: job.amount ? parseFloat(job.amount) : 0,
+                    amount: job.amount ? parseInt(job.amount) : 0,
                     transaction_id: undefined,
                     updated_source: "api",
                     message: job.description || undefined,
@@ -68,18 +121,18 @@ exports.changeRechargeRequest = async (req, res) => {
                     is_success: 1,
                     retry_count: job.retry_count || 0,
                 };
-                await sendRechargeWebhook(payload);
+                const whRes = await sendRechargeWebhook(payload);
+                console.log("Webhook(update-success)", { recharge_id: String(job._id), ok: whRes?.ok, status: whRes?.status, error: whRes?.error });
             } catch (e) {
                 console.error("Webhook send failed:", e?.message || e);
             }
             ApiResponse.success(null, "Recharge data changed successfully!").send(res);
         } else {
-            if (job.retry_count < 2) {
-                job.description = description;
-            } else {
-                job.status = "failed";
-                job.description = description
-            }
+            const currentRetry = job.retry_count || 0;
+            job.retry_count = currentRetry + 1;
+            const reachedFailThreshold = job.retry_count >= 2;
+            job.status = reachedFailThreshold ? "failed" : "pending";
+            job.description = description || "";
 
             await job.save();
             // Fire webhook to Admin Panel with updated/failed status
@@ -89,19 +142,21 @@ exports.changeRechargeRequest = async (req, res) => {
                     user_id: job.userId ? String(job.userId) : undefined,
                     phone_number: job.phoneNumber,
                     operator: job.operator,
-                    amount: job.amount ? parseFloat(job.amount) : 0,
+                    amount: job.amount ? parseInt(job.amount) : 0,
                     transaction_id: undefined,
                     updated_source: "api",
                     message: job.description || undefined,
-                    status: job.status === "failed" ? "failed" : "pending",
-                    is_success: job.status === "failed" ? 0 : 0,
+                    status: reachedFailThreshold ? "failed" : "pending",
+                    is_success: 0,
                     retry_count: job.retry_count || 0,
                 };
-                await sendRechargeWebhook(payload);
+                const whRes = await sendRechargeWebhook(payload);
+                console.log("Webhook(update)", { recharge_id: String(job._id), ok: whRes?.ok, status: whRes?.status, error: whRes?.error });
             } catch (e) {
                 console.error("Webhook send failed:", e?.message || e);
             }
-            ApiResponse.success(null, "Recharge data changed successfully!").send(res);
+            const respMsg = reachedFailThreshold ? "Recharge marked as failed." : "Failure noted. Try fail again to mark permanently.";
+            ApiResponse.success(null, respMsg).send(res);
         }
     } catch (err) {
         console.error(err);

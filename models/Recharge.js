@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const rechargeSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
     phoneNumber: { type: String, required: true },
     amount: {type: String, required: true },
     operator: { type: String, required: true },

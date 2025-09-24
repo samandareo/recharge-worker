@@ -29,16 +29,16 @@ exports.registerAdmin = async (req, res, next) => {
         const accessToken = newAdmin.generateAccessToken();
         const refreshToken = await newAdmin.generateRefreshToken();
 
-        /**
+       /**
          * LIVE DEPLOYMENT NOTE (READ ME)
          * --------------------------------
-         * যদি Admin Panel অন্য origin-এ চলে (যেমন: https://aspadmin.diderappstore.top)
-         * এবং API আর Panel ভিন্ন origin হয়, তবে cross-site কুকির জন্য সাধারণত:
-         *   - NODE_ENV=production হলে `secure: true`
-         *   - SameSite: 'None' (Strict/Lax হলে ব্রাউজার cross-site কুকি পাঠাবে না)
-         *   - প্রয়োজনে `domain` সেট করতে হতে পারে (যদি সাবডোমেইন শেয়ার করেন)
-         * লোকালে টেস্টিংয়ের সময় HTTPS না থাকলে SameSite 'Strict' রাখা হয়েছে।
-         * প্রোডাকশনে HTTPS নিশ্চিত করে SameSite 'None' করার কথা বিবেচনা করুন।
+         * Set the Admin Panel origin (e.g. https://diderappstore.top)
+         * to enable cross-site cookies in production:
+         *   - Set NODE_ENV=production to enable secure cookies
+         *   - Set SameSite to 'None' to enable cross-site cookies
+         *   - Set domain if sharing across subdomains
+         * In development, SameSite is set to 'Strict' to prevent cross-site cookies
+         *
          */
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
@@ -86,11 +86,11 @@ exports.loginAdmin = async (req, res, next) => {
         /**
          * LIVE DEPLOYMENT NOTE
          * --------------------
-         * Panel যদি https://aspadmin.diderappstore.top এ চলে এবং API আলাদা origin হয়:
-         *   - প্রোডাকশনে HTTPS রাখুন + `secure: true`
-         *   - SameSite 'None' করুন (cross-site কুকির জন্য)
-         *   - প্রয়োজনে `domain` ব্যবহার করুন (যদি সাবডোমেইন শেয়ার করেন)
-         * লোকালে SameSite 'strict' আছে যাতে non-HTTPS এ ব্রাউজার এরর না দেয়।
+         * If the Admin Panel runs at https://aspadmin.diderappstore.top and the API is on a different origin:
+         *   - Enable HTTPS in production and keep `secure: true`
+         *   - Use SameSite 'None' to allow cross-site cookies
+         *   - Configure `domain` if you are sharing cookies across subdomains
+         * In development, SameSite 'strict' avoids browser errors when HTTPS is absent.
          */
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
@@ -134,7 +134,7 @@ exports.refreshTokens = async (req, res) => {
         });
 
         // [LIVE SWITCH - PRODUCTION]
-        // In production with HTTPS and cross-site Admin Panel, uncomment the block below
+        // In production with HTTPS and a cross-site Admin Panel, uncomment the block below
         // and remove/disable the block above. This enables third-party cookie usage.
         //
         // res.cookie("refreshToken", newRefreshToken, {
