@@ -19,7 +19,10 @@ exports.protectAdmin = async (req, res, next) => {
             return ApiResponse.unauthorized("Not authorized to access this route without a token").send(res);
         }
 
+        console.log("Received token:", token);
+
         const decoded = jwt.verify(token, JWT_SECRET);
+        console.log("Decoded JWT:", decoded);
 
         const admin = await RechargeAdmin.findById(decoded.id);
 
