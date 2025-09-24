@@ -46,13 +46,6 @@ const envOrigins = [
 
 const allowedOrigins = Array.from(new Set([...localOrigins, ...envOrigins]));
 
-// Debug: Log allowed origins
-console.log("=== CORS DEBUG INFO ===");
-console.log("ADMIN_PANEL_ORIGIN:", process.env.ADMIN_PANEL_ORIGIN);
-console.log("ADMIN_PANEL_EXTRA_ORIGINS:", process.env.ADMIN_PANEL_EXTRA_ORIGINS);
-console.log("Allowed origins:", allowedOrigins);
-console.log("=====================");
-
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow non-browser clients (no origin) and allowed origins list

@@ -2,6 +2,7 @@ const Recharge = require("../models/Recharge");
 const ApiResponse = require("../utils/apiResponse");
 const { sendRechargeWebhook } = require("../utils/webhook");
 const mongoose = require("mongoose");
+const { sendRechargeRequestQueue } = require("../utils/producer");
 
 // POST /api/recharge
 // Admin: create a new pending recharge and notify Admin Panel via webhook
@@ -126,6 +127,16 @@ exports.changeRechargeRequest = async (req, res) => {
             } catch (e) {
                 console.error("Webhook send failed:", e?.message || e);
             }
+
+            const queueData = {
+                rechargeId: String(job._id),
+                userId: job.userId ? String(job.userId) : undefined,
+                phoneNumber: job.phoneNumber,
+                operator: job.operator,
+                amount: job.amount ? parseInt(job.amount) : 0,
+            };
+            await sendRechargeRequestQueue(queueData);
+            
             ApiResponse.success(null, "Recharge data changed successfully!").send(res);
         } else {
             const currentRetry = job.retry_count || 0;
