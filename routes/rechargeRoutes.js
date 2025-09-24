@@ -8,6 +8,4 @@ router
     .get(protectAdmin, rechargeController.getRechargeRequest)
     .put(protectAdmin, rechargeController.changeRechargeRequest)
 
-router.route("/pending-recharges").get(protectAdmin, rechargeController.getRechargeRequest);
-
 module.exports = router;

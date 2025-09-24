@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const Recharge = require("./Recharge");
+require("dotenv").config();
 
 const RechargeAdmin = new mongoose.Schema({
     name: {
