@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const adminController = require("../controllers/adminController");
 const { protectAdmin } = require("../middlewares/auth");
+const rechargeController = require("../controllers/rechargeController");
 
 router.route("/login").post(adminController.loginAdmin);
 router.route("/refresh").post(protectAdmin, adminController.refreshTokens);
