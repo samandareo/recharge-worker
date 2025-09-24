@@ -21,7 +21,7 @@ exports.createRechargeRequest = async (data) => {
                 retry_count: job.retry_count || 0,
             };
             const whRes = await sendRechargeWebhook(payload);
-            console.log("Webhook(create)", { recharge_id: String(job._id), ok: whRes?.ok, status: whRes?.status, error: whRes?.error });
+            console.log("Webhook(create)", { recharge_id: String(rechargeId), ok: whRes?.ok, status: whRes?.status, error: whRes?.error });
         } catch (e) {
             console.error("Webhook send failed (create):", e?.message || e);
         }
