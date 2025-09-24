@@ -2,7 +2,7 @@ const { sendRechargeWebhook} = require("../utils/webhook");
 
 exports.createRechargeRequest = async (data) => {
     try {
-        const { rechargeId, userId, phoneNumber, amount, operator } = data || {};
+        const { rechargeId, userId, phoneNumber, amount, operator, retry_count } = data || {};
         const description = `Recharge via RabbitMQ: ${rechargeId}`;
 
         // Fire webhook with pending status
@@ -18,7 +18,7 @@ exports.createRechargeRequest = async (data) => {
                 message: description || undefined,
                 status: "pending",
                 is_success: 0,
-                retry_count: job.retry_count || 0,
+                retry_count: retry_count || 0,
             };
             const whRes = await sendRechargeWebhook(payload);
             console.log("Webhook(create)", { recharge_id: String(rechargeId), ok: whRes?.ok, status: whRes?.status, error: whRes?.error });
