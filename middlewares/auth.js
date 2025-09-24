@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const ApiResponse = require("../utils/apiResponse");
 const RechargeAdmin = require("../models/RechargeAdmin");
-require("dotenv").config();
+const { JWT_SECRET } = require("../config/config");
 
 exports.protectAdmin = async (req, res, next) => {
     try {
@@ -19,7 +19,7 @@ exports.protectAdmin = async (req, res, next) => {
             return ApiResponse.unauthorized("Not authorized to access this route without a token").send(res);
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET);
 
         const admin = await RechargeAdmin.findById(decoded.id);
 

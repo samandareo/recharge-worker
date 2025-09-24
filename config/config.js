@@ -8,4 +8,5 @@ module.exports = {
   //   WEBHOOK_SECRET=YOUR_EVENT_SECRET
   WEBHOOK_URL: process.env.WEBHOOK_URL || "",
   WEBHOOK_SECRET: process.env.WEBHOOK_SECRET || "",
+  JWT_SECRET: process.env.JWT_SECRET
 };
