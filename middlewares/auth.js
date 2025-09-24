@@ -25,12 +25,14 @@ exports.protectAdmin = async (req, res, next) => {
         console.log("Decoded JWT:", decoded);
 
         const admin = await RechargeAdmin.findById(decoded.id);
+        console.log("Found admin:", admin);
 
         if (!admin) {
             return ApiResponse.unauthorized("Not authorized to access this route without a valid admin").send(res);
         }
 
         req.admin = admin;
+        console.log("Admin attached to request:", req.admin);
         next();
     } catch (err) {
         console.error(err.message);
