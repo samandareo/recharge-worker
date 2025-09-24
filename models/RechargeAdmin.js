@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
+import { JWT_SECRET, JWT_REFRESH_SECRET, JWT_EXPIRES_IN, JWT_REFRESH_EXPIRES_IN } from "../config/config";
 
 const RechargeAdmin = new mongoose.Schema({
     name: {
@@ -35,12 +35,13 @@ RechargeAdmin.pre("save", async function (next) {
 });
 
 RechargeAdmin.methods.generateAccessToken = function () {
+    console.log(`Generating access token with JWT_SECRET: ${JWT_SECRET}`);
     return jwt.sign(
         { 
             id: this._id
         },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN || "1d"}
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN || "1d"}
     );
 };
 
@@ -49,8 +50,8 @@ RechargeAdmin.methods.generateRefreshToken = async function () {
         { 
             id: this._id
         },
-        process.env.JWT_REFRESH_SECRET,
-        { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "30d"}
+        JWT_REFRESH_SECRET,
+        { expiresIn: JWT_REFRESH_EXPIRES_IN || "30d"}
     );
 
     this.refreshToken = await bcrypt.hash(refreshToken, 10);

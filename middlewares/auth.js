@@ -27,8 +27,10 @@ exports.protectAdmin = async (req, res, next) => {
         const decodedWithoutVerification = jwt.decode(token);
         console.log("Token payload (without verification):", decodedWithoutVerification);
 
+        console.log(`Generating access token with JWT_SECRET: ${JWT_SECRET}`);
         const decoded = jwt.verify(token, JWT_SECRET);
         console.log("Decoded JWT:", decoded);
+
 
         const admin = await RechargeAdmin.findById(decoded.id);
         console.log("Found admin:", admin);
